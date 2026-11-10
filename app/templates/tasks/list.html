@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}Tasks{% endblock %}
+{% block heading %}Tasks{% endblock %}
+{% block actions %}
+<a class="btn btn--primary" href="/tasks/new">{{ ui.icon("plus") }}<span class="hide-sm">New task</span></a>
+{% endblock %}
+
+{% block content %}
+{% set status_options = [("open", "Open (not done)")] + enum_options(TaskStatus) %}
+{% set project_filter_options = [("none", "No project")] + project_options(projects) %}
+{% set due_options = due_filters.items() | list %}
+{% set filtered = filters.status or filters.priority or filters.project or filters.due or filters.q %}
+
+<form class="filters" method="get" action="/tasks" data-autosubmit>
+  {{ ui.search_box(filters.q, "Search tasks…") }}
+  {{ ui.filter_select("status", "Status", status_options, filters.status, "All statuses") }}
+  {{ ui.filter_select("priority", "Priority", enum_options(TaskPriority), filters.priority, "All priorities") }}
+  {{ ui.filter_select("project", "Project", project_filter_options, filters.project, "All projects") }}
+  {{ ui.filter_select("due", "Due", due_options, filters.due, "Any due date") }}
+  <button type="submit" class="btn btn--ghost">Filter</button>
+  {% if filtered %}<a class="link small" href="/tasks">Clear</a>{% endif %}
+</form>
+
+{% if tasks %}
+<section class="card panel panel--flush">
+  {{ ui.task_list(tasks) }}
+</section>
+{% elif filtered %}
+  {{ ui.empty_state("No matching tasks", "Try a different filter or search term.", icon_name="search") }}
+{% else %}
+  {{ ui.empty_state("No tasks yet", "Break your projects into small, clear tasks.", "/tasks/new", "New task", "tasks") }}
+{% endif %}
+{% endblock %}

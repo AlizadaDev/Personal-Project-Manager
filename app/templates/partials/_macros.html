@@ -1,0 +1,152 @@
+{# Reusable UI pieces. Import with: {% import "partials/_macros.html" as ui with context %} #}
+
+{% macro icon(name, cls="") -%}
+<svg class="icon {{ cls }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ ICONS[name] | safe }}</svg>
+{%- endmacro %}
+
+{% macro status_badge(value) -%}
+<span class="badge badge--{{ value | slug }}">{{ value }}</span>
+{%- endmacro %}
+
+{% macro priority_badge(value) -%}
+<span class="prio prio--{{ value | slug }}" title="{{ value }} priority">{{ value }}</span>
+{%- endmacro %}
+
+{# ---- form fields (read `values` and `errors` from the page context) ---- #}
+
+{% macro _error(name) -%}
+{% if errors.get(name) %}<p class="field-error" id="err-{{ name }}">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro _aria(name) -%}
+{% if errors.get(name) %}aria-invalid="true" aria-describedby="err-{{ name }}"{% endif %}
+{%- endmacro %}
+
+{% macro input(name, label, type="text", required=False, placeholder="", maxlength=None, autofocus=False) %}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ values.get(name, '') }}"
+         {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+         {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+         {% if required %}required{% endif %} {% if autofocus %}autofocus{% endif %} {{ _aria(name) }}>
+  {{ _error(name) }}
+</div>
+{% endmacro %}
+
+{% macro textarea(name, label, rows=5, placeholder="") %}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}</label>
+  <textarea id="f-{{ name }}" name="{{ name }}" rows="{{ rows }}" placeholder="{{ placeholder }}" {{ _aria(name) }}>{{ values.get(name, '') }}</textarea>
+  {{ _error(name) }}
+</div>
+{% endmacro %}
+
+{% macro select(name, label, options, blank=None, required=False) %}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <select id="f-{{ name }}" name="{{ name }}" {% if required %}required{% endif %} {{ _aria(name) }}>
+    {% if blank is not none %}<option value="">{{ blank }}</option>{% endif %}
+    {% for value, text in options %}
+    <option value="{{ value }}" {% if value | string == values.get(name, '') | string %}selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {{ _error(name) }}
+</div>
+{% endmacro %}
+
+{# ---- filters bar ---- #}
+
+{% macro filter_select(name, label, options, current, all_label="All") %}
+<label class="sr-only" for="flt-{{ name }}">{{ label }}</label>
+<select id="flt-{{ name }}" name="{{ name }}">
+  <option value="">{{ all_label }}</option>
+  {% for value, text in options %}
+  <option value="{{ value }}" {% if value | string == current %}selected{% endif %}>{{ text }}</option>
+  {% endfor %}
+</select>
+{% endmacro %}
+
+{% macro search_box(current, placeholder="Search…") %}
+<div class="search">
+  {{ icon("search") }}
+  <label class="sr-only" for="flt-q">Search</label>
+  <input id="flt-q" type="search" name="q" value="{{ current }}" placeholder="{{ placeholder }}">
+</div>
+{% endmacro %}
+
+{# ---- misc ---- #}
+
+{% macro empty_state(title, text, action_url=None, action_label=None, icon_name="folder") %}
+<div class="empty">
+  <div class="empty__icon">{{ icon(icon_name) }}</div>
+  <h3>{{ title }}</h3>
+  <p>{{ text }}</p>
+  {% if action_url %}<a class="btn btn--primary" href="{{ action_url }}">{{ icon("plus") }}<span>{{ action_label }}</span></a>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro delete_button(action, confirm_text, next_url="", label="Delete", compact=False) %}
+<form method="post" action="{{ action }}" data-confirm="{{ confirm_text }}" class="inline-form">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+  {% if compact %}
+  <button type="submit" class="icon-btn icon-btn--danger" aria-label="{{ label }}" title="{{ label }}">{{ icon("trash") }}</button>
+  {% else %}
+  <button type="submit" class="btn btn--danger-ghost">{{ icon("trash") }}<span>{{ label }}</span></button>
+  {% endif %}
+</form>
+{% endmacro %}
+
+{% macro progress_bar(done, total) %}
+{% set pct = ((done / total) * 100) | round | int if total else 0 %}
+<div class="progress" role="progressbar" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Task progress">
+  <div class="progress__bar" style="width: {{ pct }}%"></div>
+</div>
+{% endmacro %}
+
+{% macro task_list(tasks, show_project=True) %}
+{% set here = current_url(request) %}
+<ul class="task-list">
+  {% for t in tasks %}
+  <li class="task{% if t.is_done %} is-done{% endif %}">
+    <form method="post" action="/tasks/{{ t.id }}/toggle" class="task__check">
+      <input type="hidden" name="next" value="{{ here }}">
+      <button type="submit" class="check{% if t.is_done %} is-checked{% endif %}"
+              aria-label="{{ 'Mark as not done' if t.is_done else 'Mark as done' }}: {{ t.title }}"
+              title="{{ 'Mark as not done' if t.is_done else 'Mark as done' }}">{{ icon("check") }}</button>
+    </form>
+    <div class="task__body">
+      <a class="task__title" href="/tasks/{{ t.id }}/edit?next={{ here | urlencode }}">{{ t.title }}</a>
+      <div class="task__meta">
+        {% if show_project and t.project %}<a class="chip" href="/projects/{{ t.project.id }}">{{ icon("folder") }}<span>{{ t.project.name }}</span></a>{% endif %}
+        {% if t.due_date %}
+        <span class="due{% if t.is_overdue %} due--overdue{% elif t.due_date == today() and not t.is_done %} due--today{% endif %}">
+          {{ icon("calendar") }}{% if t.is_overdue %}Overdue · {% endif %}{{ t.due_date | due_label }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="task__tags">
+      {{ priority_badge(t.priority) }}
+      {{ status_badge(t.status) }}
+    </div>
+    <div class="row-actions">
+      <a class="icon-btn" href="/tasks/{{ t.id }}/edit?next={{ here | urlencode }}" aria-label="Edit task" title="Edit">{{ icon("edit") }}</a>
+      {{ delete_button("/tasks/" ~ t.id ~ "/delete", "Delete this task?", here, "Delete task", compact=True) }}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
+{% macro note_card(n, show_project=True) %}
+<a class="card note-card" href="/notes/{{ n.id }}">
+  <h3 class="note-card__title">{{ n.title }}</h3>
+  <p class="note-card__text">{{ n.content | truncate(220) if n.content else "No content yet." }}</p>
+  <div class="note-card__foot">
+    {% if show_project %}
+      {% if n.project %}<span class="chip">{{ icon("folder") }}<span>{{ n.project.name }}</span></span>{% else %}<span class="chip chip--muted">No project</span>{% endif %}
+    {% endif %}
+    <span class="muted small">{{ n.updated_at | fmt_date }}</span>
+  </div>
+</a>
+{% endmacro %}

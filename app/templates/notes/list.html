@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}Notes{% endblock %}
+{% block heading %}Notes{% endblock %}
+{% block actions %}
+<a class="btn btn--primary" href="/notes/new">{{ ui.icon("plus") }}<span class="hide-sm">New note</span></a>
+{% endblock %}
+
+{% block content %}
+{% set project_filter_options = [("none", "No project")] + project_options(projects) %}
+<form class="filters" method="get" action="/notes" data-autosubmit>
+  {{ ui.search_box(filters.q, "Search notes…") }}
+  {{ ui.filter_select("project", "Project", project_filter_options, filters.project, "All projects") }}
+  <button type="submit" class="btn btn--ghost">Filter</button>
+  {% if filters.project or filters.q %}<a class="link small" href="/notes">Clear</a>{% endif %}
+</form>
+
+{% if notes %}
+<div class="card-grid">
+  {% for n in notes %}{{ ui.note_card(n) }}{% endfor %}
+</div>
+{% elif filters.project or filters.q %}
+  {{ ui.empty_state("No matching notes", "Try a different filter or search term.", icon_name="search") }}
+{% else %}
+  {{ ui.empty_state("No notes yet", "Capture ideas, meeting notes and research here.", "/notes/new", "New note", "note") }}
+{% endif %}
+{% endblock %}

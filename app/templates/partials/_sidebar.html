@@ -1,0 +1,31 @@
+{% set path = request.url.path %}
+{% set nav = [
+  ("/", "Dashboard", "dashboard"),
+  ("/projects", "Projects", "folder"),
+  ("/tasks", "Tasks", "tasks"),
+  ("/notes", "Notes", "note"),
+] %}
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+  <div class="sidebar__brand">
+    <span class="brand-mark">{{ ui.icon("logo") }}</span>
+    <span class="brand-name">{{ app_name }}</span>
+    <button type="button" class="icon-btn sidebar__close" data-sidebar-close aria-label="Close menu">{{ ui.icon("x") }}</button>
+  </div>
+  <nav class="sidebar__nav">
+    {% for href, label, icon_name in nav %}
+    {% set active = path == "/" if href == "/" else path.startswith(href) %}
+    <a href="{{ href }}" class="nav-link{% if active %} is-active{% endif %}" {% if active %}aria-current="page"{% endif %}>
+      {{ ui.icon(icon_name) }}<span>{{ label }}</span>
+    </a>
+    {% endfor %}
+  </nav>
+  <div class="sidebar__section">
+    <p class="sidebar__label">Quick add</p>
+    <a href="/projects/new" class="nav-link nav-link--sub">{{ ui.icon("plus") }}<span>New project</span></a>
+    <a href="/tasks/new" class="nav-link nav-link--sub">{{ ui.icon("plus") }}<span>New task</span></a>
+    <a href="/notes/new" class="nav-link nav-link--sub">{{ ui.icon("plus") }}<span>New note</span></a>
+  </div>
+  <div class="sidebar__footer">
+    <span class="muted small">Personal workspace</span>
+  </div>
+</aside>

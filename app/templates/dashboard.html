@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block subheading %}<p class="topbar__sub">{{ today().strftime("%A, %d %B %Y") }}</p>{% endblock %}
+{% block actions %}
+<a class="btn btn--primary" href="/projects/new">{{ ui.icon("plus") }}<span class="hide-sm">New project</span></a>
+{% endblock %}
+
+{% macro stat(label, value, icon_name, href, tone) %}
+<a class="card stat stat--{{ tone }}" href="{{ href }}">
+  <span class="stat__icon">{{ ui.icon(icon_name) }}</span>
+  <span class="stat__value">{{ value }}</span>
+  <span class="stat__label">{{ label }}</span>
+</a>
+{% endmacro %}
+
+{% block content %}
+<section class="stats" aria-label="Summary">
+  {{ stat("Total projects", d.total_projects, "folder", "/projects", "primary") }}
+  {{ stat("Active projects", d.active_projects, "play", "/projects?status=In+Progress", "info") }}
+  {{ stat("Completed projects", d.completed_projects, "check-circle", "/projects?status=Completed", "success") }}
+  {{ stat("Pending tasks", d.pending_tasks, "list", "/tasks?status=open", "warning") }}
+  {{ stat("Today's tasks", d.today_tasks | length, "calendar", "/tasks?due=today&status=open", "danger") }}
+</section>
+
+<div class="grid-2">
+  <section class="card panel">
+    <header class="panel__head">
+      <h2>Today's focus</h2>
+      <a class="link small" href="/tasks?status=open">All open tasks →</a>
+    </header>
+    {% if d.overdue_tasks %}
+      <h3 class="panel__label text-danger">{{ ui.icon("alert") }} Overdue ({{ d.overdue_tasks | length }})</h3>
+      {{ ui.task_list(d.overdue_tasks) }}
+    {% endif %}
+    <h3 class="panel__label">{{ ui.icon("calendar") }} Due today ({{ d.today_tasks | length }})</h3>
+    {% if d.today_tasks %}
+      {{ ui.task_list(d.today_tasks) }}
+    {% else %}
+      <p class="muted panel__empty">Nothing due today. <a class="link" href="/tasks/new">Add a task</a></p>
+    {% endif %}
+  </section>
+
+  <section class="card panel">
+    <header class="panel__head">
+      <h2>Recent projects</h2>
+      <a class="link small" href="/projects">View all →</a>
+    </header>
+    {% if d.recent_projects %}
+    <ul class="mini-list">
+      {% for p in d.recent_projects %}
+      {% set done, total = progress.get(p.id, (0, 0)) %}
+      <li>
+        <a class="mini-project" href="/projects/{{ p.id }}">
+          <div class="mini-project__top">
+            <span class="mini-project__name">{{ p.name }}</span>
+            {{ ui.status_badge(p.status) }}
+          </div>
+          <div class="mini-project__meta">
+            <span>{{ p.category }}</span>
+            <span>{{ done }}/{{ total }} tasks</span>
+          </div>
+          {{ ui.progress_bar(done, total) }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      {{ ui.empty_state("No projects yet", "Start by creating your first project.", "/projects/new", "New project") }}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

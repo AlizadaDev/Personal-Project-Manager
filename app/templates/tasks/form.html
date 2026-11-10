@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}{{ "Edit task" if task else "New task" }}{% endblock %}
+{% block back %}<a class="back-link" href="{{ next_url }}">{{ ui.icon("back") }}Back</a>{% endblock %}
+{% block heading %}{{ "Edit task" if task else "New task" }}{% endblock %}
+{% block actions %}
+{% if task %}
+{{ ui.delete_button("/tasks/" ~ task.id ~ "/delete", "Delete this task?", next_url) }}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<form class="card form" method="post" action="{{ '/tasks/%d/edit' % task.id if task else '/tasks' }}" novalidate>
+  <input type="hidden" name="next" value="{{ next_url }}">
+  {% if errors %}<div class="form-alert" role="alert">{{ ui.icon("alert") }}Please fix the highlighted fields.</div>{% endif %}
+
+  {{ ui.input("title", "Title", required=True, maxlength=200, placeholder="e.g. Design the homepage", autofocus=not task) }}
+  {{ ui.textarea("description", "Description", rows=4, placeholder="Details, links, acceptance criteria…") }}
+
+  <div class="form-row">
+    {{ ui.select("project_id", "Project", project_options(projects), blank="— No project —") }}
+    {{ ui.input("due_date", "Due date", type="date") }}
+  </div>
+  <div class="form-row">
+    {{ ui.select("priority", "Priority", enum_options(TaskPriority), required=True) }}
+    {{ ui.select("status", "Status", enum_options(TaskStatus), required=True) }}
+  </div>
+  {% if task and task.completed_at %}
+  <p class="muted small">Completed {{ task.completed_at | fmt_datetime }}</p>
+  {% endif %}
+
+  <div class="form-actions">
+    <a class="btn btn--ghost" href="{{ next_url }}">Cancel</a>
+    <button type="submit" class="btn btn--primary">{{ "Save changes" if task else "Create task" }}</button>
+  </div>
+</form>
+{% endblock %}

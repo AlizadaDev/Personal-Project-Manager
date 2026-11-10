@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}{{ project.name }}{% endblock %}
+{% block back %}<a class="back-link" href="/projects">{{ ui.icon("back") }}Projects</a>{% endblock %}
+{% block heading %}{{ project.name }}{% endblock %}
+{% block actions %}
+<a class="btn btn--ghost" href="/projects/{{ project.id }}/edit">{{ ui.icon("edit") }}<span class="hide-sm">Edit</span></a>
+{% set task_count = tasks | length %}
+{{ ui.delete_button(
+     "/projects/" ~ project.id ~ "/delete",
+     "Delete \"" ~ project.name ~ "\"? This also deletes its " ~ task_count ~ " task" ~ ("" if task_count == 1 else "s") ~ ". Notes are kept.",
+     label="Delete") }}
+{% endblock %}
+
+{% block content %}
+<section class="card project-summary">
+  <div class="project-summary__badges">
+    {{ ui.status_badge(project.status) }}
+    <span class="category">{{ project.category }}</span>
+  </div>
+  {% if project.description %}
+  <p class="prose">{{ project.description }}</p>
+  {% else %}
+  <p class="muted">No description.</p>
+  {% endif %}
+  <dl class="meta-grid">
+    <div><dt>Start date</dt><dd>{{ project.start_date | fmt_date }}</dd></div>
+    <div><dt>Deadline</dt><dd class="{% if project.is_overdue %}text-danger{% endif %}">{{ project.deadline | fmt_date }}{% if project.is_overdue %} · Overdue{% endif %}</dd></div>
+    <div><dt>Progress</dt><dd>{{ done_count }}/{{ tasks | length }} tasks done</dd></div>
+    <div><dt>Last updated</dt><dd>{{ project.updated_at | fmt_date }}</dd></div>
+  </dl>
+  {{ ui.progress_bar(done_count, tasks | length) }}
+</section>
+
+{% set here = current_url(request) %}
+<section class="card panel">
+  <header class="panel__head">
+    <h2>Tasks <span class="count">{{ tasks | length }}</span></h2>
+    <a class="btn btn--ghost btn--sm" href="/tasks/new?project_id={{ project.id }}&next={{ here | urlencode }}">{{ ui.icon("plus") }}<span>Add task</span></a>
+  </header>
+  {% if tasks %}
+    {{ ui.task_list(tasks, show_project=False) }}
+  {% else %}
+    <p class="muted panel__empty">No tasks yet.</p>
+  {% endif %}
+</section>
+
+<section class="card panel">
+  <header class="panel__head">
+    <h2>Notes <span class="count">{{ notes | length }}</span></h2>
+    <a class="btn btn--ghost btn--sm" href="/notes/new?project_id={{ project.id }}&next={{ here | urlencode }}">{{ ui.icon("plus") }}<span>Add note</span></a>
+  </header>
+  {% if notes %}
+  <div class="card-grid card-grid--tight">
+    {% for n in notes %}{{ ui.note_card(n, show_project=False) }}{% endfor %}
+  </div>
+  {% else %}
+    <p class="muted panel__empty">No notes yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

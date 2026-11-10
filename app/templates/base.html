@@ -1,0 +1,59 @@
+{% import "partials/_macros.html" as ui with context %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · {{ app_name }}</title>
+  <script>
+    /* Apply the saved theme before the page paints (prevents a white flash in dark mode). */
+    (function () {
+      var theme = "light";
+      try {
+        theme = localStorage.getItem("theme") ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      } catch (e) {}
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 2 10 5-10 5L2 7Z'/%3E%3Cpath d='m2 17 10 5 10-5'/%3E%3Cpath d='m2 12 10 5 10-5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{{ static_url('css/style.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <div class="app">
+    {% include "partials/_sidebar.html" %}
+    <div class="sidebar-backdrop" data-sidebar-close></div>
+
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="icon-btn menu-btn" data-sidebar-open aria-label="Open menu">{{ ui.icon("menu") }}</button>
+        <div class="topbar__title">
+          {% block back %}{% endblock %}
+          <h1>{% block heading %}{% endblock %}</h1>
+          {% block subheading %}{% endblock %}
+        </div>
+        <div class="topbar__actions">
+          {% block actions %}{% endblock %}
+          <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Toggle dark mode" title="Toggle theme">
+            {{ ui.icon("moon", "icon-moon") }}{{ ui.icon("sun", "icon-sun") }}
+          </button>
+        </div>
+      </header>
+
+      {% set flash = flash_message(request) %}
+      {% if flash %}
+      <div class="flash" role="status" data-flash>
+        {{ ui.icon("check-circle") }}<span>{{ flash }}</span>
+        <button type="button" class="icon-btn icon-btn--sm" data-flash-close aria-label="Dismiss">{{ ui.icon("x") }}</button>
+      </div>
+      {% endif %}
+
+      <main id="content" class="content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script src="{{ static_url('js/app.js') }}"></script>
+</body>
+</html>

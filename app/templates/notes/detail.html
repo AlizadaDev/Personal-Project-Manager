@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}{{ note.title }}{% endblock %}
+{% block back %}<a class="back-link" href="/notes">{{ ui.icon("back") }}Notes</a>{% endblock %}
+{% block heading %}{{ note.title }}{% endblock %}
+{% block actions %}
+<a class="btn btn--ghost" href="/notes/{{ note.id }}/edit">{{ ui.icon("edit") }}<span class="hide-sm">Edit</span></a>
+{{ ui.delete_button("/notes/" ~ note.id ~ "/delete", "Delete this note?") }}
+{% endblock %}
+
+{% block content %}
+<article class="card note-view">
+  <div class="note-view__meta">
+    {% if note.project %}
+      <a class="chip" href="/projects/{{ note.project.id }}">{{ ui.icon("folder") }}<span>{{ note.project.name }}</span></a>
+    {% else %}
+      <span class="chip chip--muted">No project</span>
+    {% endif %}
+    <span class="muted small">Updated {{ note.updated_at | fmt_datetime }}</span>
+  </div>
+  {% if note.content %}
+  <div class="prose">{{ note.content }}</div>
+  {% else %}
+  <p class="muted">This note is empty. <a class="link" href="/notes/{{ note.id }}/edit">Add content</a></p>
+  {% endif %}
+</article>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}Not found{% endblock %}
+{% block heading %}Not found{% endblock %}
+
+{% block content %}
+<div class="empty">
+  <div class="empty__icon">{{ ui.icon("search") }}</div>
+  <h3>We couldn't find that page</h3>
+  <p>It may have been deleted, or the link is wrong.</p>
+  <a class="btn btn--primary" href="/">Go to dashboard</a>
+</div>
+{% endblock %}

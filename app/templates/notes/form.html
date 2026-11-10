@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}{{ "Edit note" if note else "New note" }}{% endblock %}
+{% block back %}<a class="back-link" href="{{ cancel_url }}">{{ ui.icon("back") }}Back</a>{% endblock %}
+{% block heading %}{{ "Edit note" if note else "New note" }}{% endblock %}
+
+{% block content %}
+<form class="card form" method="post" action="{{ '/notes/%d/edit' % note.id if note else '/notes' }}" novalidate>
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+  {% if errors %}<div class="form-alert" role="alert">{{ ui.icon("alert") }}Please fix the highlighted fields.</div>{% endif %}
+
+  {{ ui.input("title", "Title", required=True, maxlength=200, placeholder="e.g. Pricing ideas", autofocus=not note) }}
+  {{ ui.select("project_id", "Project", project_options(projects), blank="— No project —") }}
+  {{ ui.textarea("content", "Content", rows=12, placeholder="Write your note…") }}
+
+  <div class="form-actions">
+    <a class="btn btn--ghost" href="{{ cancel_url }}">Cancel</a>
+    <button type="submit" class="btn btn--primary">{{ "Save changes" if note else "Create note" }}</button>
+  </div>
+</form>
+{% endblock %}

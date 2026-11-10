@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "partials/_macros.html" as ui with context %}
+
+{% block title %}Projects{% endblock %}
+{% block heading %}Projects{% endblock %}
+{% block actions %}
+<a class="btn btn--primary" href="/projects/new">{{ ui.icon("plus") }}<span class="hide-sm">New project</span></a>
+{% endblock %}
+
+{% block content %}
+<form class="filters" method="get" action="/projects" data-autosubmit>
+  {{ ui.search_box(filters.q, "Search projects…") }}
+  {{ ui.filter_select("status", "Status", enum_options(ProjectStatus), filters.status, "All statuses") }}
+  {{ ui.filter_select("category", "Category", enum_options(ProjectCategory), filters.category, "All categories") }}
+  <button type="submit" class="btn btn--ghost">Filter</button>
+  {% if filters.status or filters.category or filters.q %}<a class="link small" href="/projects">Clear</a>{% endif %}
+</form>
+
+{% if projects %}
+<div class="card-grid">
+  {% for p in projects %}
+  {% set done, total = progress.get(p.id, (0, 0)) %}
+  <a class="card project-card" href="/projects/{{ p.id }}">
+    <div class="project-card__head">
+      <span class="category">{{ p.category }}</span>
+      {{ ui.status_badge(p.status) }}
+    </div>
+    <h3 class="project-card__title">{{ p.name }}</h3>
+    <p class="project-card__desc">{{ p.description | truncate(140) if p.description else "No description." }}</p>
+    {{ ui.progress_bar(done, total) }}
+    <div class="project-card__foot">
+      <span>{{ done }}/{{ total }} tasks</span>
+      {% if p.deadline %}
+      <span class="due{% if p.is_overdue %} due--overdue{% endif %}">{{ ui.icon("calendar") }}{{ p.deadline | fmt_date }}</span>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% elif filters.status or filters.category or filters.q %}
+  {{ ui.empty_state("No matching projects", "Try a different filter or search term.", icon_name="search") }}
+{% else %}
+  {{ ui.empty_state("No projects yet", "Projects hold your tasks and notes. Create your first one.", "/projects/new", "New project") }}
+{% endif %}
+{% endblock %}
